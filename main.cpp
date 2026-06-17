@@ -5,9 +5,9 @@
 
 class Texture
 {
-    std::string Path = "texture";
+    std::string Path = "";
     public:    
-    Texture(const std::string Path):Path(Path)
+    Texture(const std::string& Path):Path(Path)
     {
         if(Path.empty())
         {
@@ -21,27 +21,37 @@ class Texture
 class ResourceManager
 {
     std::unordered_map<int,std::unique_ptr<Texture>>Textures;
+    std::unordered_map<std::string,int> PathToIdMap;
     int ID = 0;
     public:
     ResourceManager()
     {
        Textures.reserve(100);
     }
-    void AddResource(const std::string Name)
+    int AddResource(const std::string& Name)
     {
-        auto NewTexture = std::make_unique<Texture>(Name);
-        Textures.emplace(ID,std::move(NewTexture));
-        ID++;
+        if(Textures.empty() || !PathToIdMap.contains(Name))
+        {
+            auto NewTexture = std::make_unique<Texture>(Name);
+            Textures.emplace(ID,std::move(NewTexture));
+            PathToIdMap.emplace(Name,ID);
+            int OldID = ID;
+            ID++;
+            return OldID;
+        }
+        return -1;
     }
     Texture* GetTexture(int Id) const 
     {
-        if(Textures.contains(Id))
+        auto it = Textures.find(Id);
+
+        if(it != Textures.end())
         {
-            return Textures.find(Id)->second.get();
+            return it->second.get();
         }
         else
         {
-            std::cout << "Texture with Id:" << Id << " NOT Found" << std::endl;
+            std::cout << "Get : Texture with Id:" << Id << " Not Found" << std::endl;
             return nullptr;
         }
         return nullptr;
@@ -50,21 +60,34 @@ class ResourceManager
 
 struct RenderComponent
 {
-    std::shared_ptr<ResourceManager> ReManager = nullptr;
-    explicit RenderComponent(std::shared_ptr<ResourceManager> RM):ReManager(RM){}
+    ResourceManager& ReManager;
+    explicit RenderComponent(ResourceManager& RM):ReManager(RM){}
     void RenderTexture(int TextureID)
     {
-        auto Texture_ptr = ReManager->GetTexture(TextureID);
-        std::cout << "Render Texture pointer: " << Texture_ptr << " Path: " << Texture_ptr->GetPath() << "\n";
+        auto Texture_ptr = ReManager.GetTexture(TextureID);
+        if(Texture_ptr)
+        {
+            std::cout << "Render Texture pointer: " << Texture_ptr << " Path: " << Texture_ptr->GetPath() << "\n";
+        }
+        else
+        {
+            std::cout << "Render: Texture with ID :" << TextureID << " Not found!\n";
+        }
     }
 };
 
 
 int main()
 {
-    auto RM = std::make_shared<ResourceManager>();
-    RM->AddResource("Texture1");
+    ResourceManager RM;
+    std::string Texture1 = "Texture1";
+    std::string Texture2 = "Texture2";
+    std::cout << "Add new Resource, got id :" << RM.AddResource(Texture1) << '\n';
+    std::cout << "Add new Resource, got id :" << RM.AddResource(Texture2) << '\n';
+    std::cout << "Add new Resource, got id :" << RM.AddResource(Texture1) << '\n';
     auto Render = std::make_unique<RenderComponent>(RM);
     Render->RenderTexture(0);
+    Render->RenderTexture(1);
+    Render->RenderTexture(2);
     return 0;
 }

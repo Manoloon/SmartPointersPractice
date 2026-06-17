@@ -1,8 +1,8 @@
 [
 {
-  "directory": "C:/Coding/cpp/SmartPointersCourse/build",
-  "command": "C:\\msys64\\mingw64\\bin\\g++.exe   -g -std=gnu++20 -o CMakeFiles\\SmartPointersCourse.dir\\main.cpp.obj -c C:\\Coding\\cpp\\SmartPointersCourse\\main.cpp",
-  "file": "C:/Coding/cpp/SmartPointersCourse/main.cpp",
-  "output": "CMakeFiles/SmartPointersCourse.dir/main.cpp.obj"
+  "directory": "C:/Coding/cpp/SmartPointersPractice/build",
+  "command": "C:\\msys64\\mingw64\\bin\\g++.exe   -g -std=gnu++20 -o CMakeFiles\\SmartPointersPractice.dir\\main.cpp.obj -c C:\\Coding\\cpp\\SmartPointersPractice\\main.cpp",
+  "file": "C:/Coding/cpp/SmartPointersPractice/main.cpp",
+  "output": "CMakeFiles/SmartPointersPractice.dir/main.cpp.obj"
 }
 ]
