@@ -1,95 +1,86 @@
-/* Imagina un RPG donde un jugador puede invocar criaturas.
-Un jugador puede invocar:
-Wolf
-Skeleton
-Golem
-
-Cada invocación tiene:
-Nombre
-Vida
-Daño
-
-Reglas de gameplay
-    Una invocación conoce quién la creó. Skeleton -> Player
-
-    El jugador mantiene una lista de sus invocaciones activas.
-                                            Player
-                                            ├── Wolf
-                                            ├── Skeleton
-                                            └── Golem
-    Cuando una invocación muere: debe desaparecer automáticamente del juego.
-
-    Cuando el jugador muere: todas las invocaciones deben desaparecer.
-
-    Existe un sistema global: SummonTracker : que muestra por consola todas las invocaciones activas.
-                                            Wolf
-                                            Skeleton
-                                            Golem
-                                            Regla 6
-    El SummonTracker NO debe impedir que una invocación sea destruida.*/
-#include <memory>
-#include <array>
+#include "SummonSystem.h"
 #include <iostream>
-enum ECreatureType
-{
-    Wolf,Skeleton,Golem,
-};
-class Summon;
-// lifetime controller
-class Player
-{
-    std::unique_ptr<Summon> Summons;
-    public:
-    void SummonCreature(ECreatureType new_type)
-    {
-        Summons = std::make_unique<Summon>(new_type);
-        std::cout << "Player : I have summoned a : " << new_type << "\n";
-    }
-    ~Player()
-    {
-        std::cout << "Player : I died!\n"; 
-    }
-};
-
-class Summon
-{
-    ECreatureType Type;
-    public:
-    Summon(ECreatureType new_type):Type(new_type)
-    {
-        std::cout << "Summon : I am a :" << Type << "\n";
-    }
-    ECreatureType GetType() const {return Type;}
-    ~Summon()
-    {
-        std::cout << "Summon : I died too\n";
-    }
-};
-
-// observer
-class SummonTracker
-{
-    Summon* SummonOnStage;
-    public:
-    void RegisterSummon(Summon* new_summon)
-    {
-        if(new_summon)
-        {
-            SummonOnStage = new_summon;
-            std::cout << "SummonTracker : " << new_summon->GetType() << "Summoned\n";
-        }
-    }
-    void UnregisterSummon(Summon* summon)
-    {
-        if(SummonOnStage == summon)
-        {
-            std::cout << "SummonTracker : " << SummonOnStage->GetType() << "Unregistered\n";
-            SummonOnStage = nullptr;
-        }
-    }
-};
 
 int main()
 {
-    
+    auto tracker = std::make_unique<SummonTracker>();
+    auto player = std::make_unique<Player>(tracker.get());  
+    player->SummonCreature(ECreatureType::Golem);
+    player->SummonCreature(ECreatureType::Wolf);
+    player->SummonCreature(ECreatureType::Skeleton);
+    player->DestroyCreatureByType(ECreatureType::Wolf);
+    //player->SummonCreature(ECreatureType::Skeleton);
+    player.reset();
+}
+
+////////// Summon /////////////////
+Summon::Summon(ECreatureType new_type, Player *Owner):Type(new_type),Owner(Owner)
+{
+    std::cout << "Summon : I am a :" << Type << "\n";
+    std::cout << "Summon : My owner is :" << Owner << "\n";
+}
+
+Summon::~Summon()
+{
+    std::cout << "Summon : I died too\n";
+}
+
+////////// Player /////////////////
+Player::~Player()
+{
+    std::cout << "Player : I died!\n";
+    for(const auto& s : Summons)
+    {
+        tracker->UnregisterSummon(s.second.get());
+    }
+}
+void Player::SummonCreature(ECreatureType new_type)
+{
+    auto new_summon = std::make_unique<Summon>(new_type,this);
+    tracker->RegisterSummon(new_summon.get());
+    Summons.emplace(new_type,std::move(new_summon));
+    std::cout << "Player : I have summoned a : " << new_type << "\n";
+}
+
+void Player::DestroyCreatureByRef(Summon *summon)
+{
+    if(Summons.empty()) return;
+    // buscar el summon en la lista
+    std::unordered_map<ECreatureType,std::unique_ptr<Summon>>::iterator it = Summons.find(summon->GetType());
+    if(it != Summons.end())
+    {
+        tracker->UnregisterSummon(it->second.get());
+        it->second.reset();
+        Summons.erase(it);      
+    }
+}
+
+void Player::DestroyCreatureByType(ECreatureType Type)
+{
+    if(Summons.empty()) return;
+    // buscar el summon en la lista
+    std::unordered_map<ECreatureType,std::unique_ptr<Summon>>::iterator it = Summons.find(Type);
+    if(it != Summons.end())
+    {
+        tracker->UnregisterSummon(it->second.get());
+        it->second.reset();
+        Summons.erase(it);      
+    }
+}
+
+////////// SummonTracker /////////////////
+void SummonTracker::RegisterSummon(Summon *Summon)
+{
+    if(Summon)
+    {
+        std::cout << "SummonTracker : " << Summon->GetType() << " Summoned\n"; 
+    }
+}
+
+void SummonTracker::UnregisterSummon(Summon *Summon)
+{
+    if(Summon)
+    {
+        std::cout << "SummonTracker : " << Summon->GetType() << " Unsummoned\n"; 
+    }
 }
