@@ -26,7 +26,6 @@ Summon::~Summon()
 }
 
 ////////// Player /////////////////
-Player::~Player()
 {
     std::cout << "Player : I died!\n";
     for(const auto& s : Summons)

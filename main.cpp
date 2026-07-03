@@ -2,6 +2,7 @@
 #include <string>
 #include <unordered_map>
 #include <memory>
+#include <format>
 
 class Texture
 {
@@ -51,6 +52,7 @@ class ResourceManager
         }
         else
         {
+            //std::print("Get : Texture with Id: {} Not Found\n",Id);
             std::cout << "Get : Texture with Id:" << Id << " Not Found" << std::endl;
             return nullptr;
         }
